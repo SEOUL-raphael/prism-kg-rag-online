@@ -1,0 +1,528 @@
+{
+  "defaults": {
+    "data_dir": "data",
+    "service_key_env": "DATA_GO_KR_SERVICE_KEY",
+    "year": 2026,
+    "page_param": "pageNo",
+    "size_param": "numOfRows",
+    "page_size": 100,
+    "response_type_param": "_type",
+    "response_type_value": "json"
+  },
+  "sources": [
+    {
+      "id": "paju_press",
+      "enabled": false,
+      "name": "경기도 파주시_보도자료",
+      "org": "경기도 파주시",
+      "region": "경기도",
+      "kind": "data_go_kr_rest",
+      "portal_url": "https://www.data.go.kr/data/15159546/openapi.do?recommendDataYn=Y",
+      "base_url": "https://apis.data.go.kr/4060000/pressrelease/pressRelease",
+      "license": "이용허락범위 제한 없음",
+      "date_query": {
+        "year_param": "year",
+        "begin_param": "bgngYmd",
+        "end_param": "endYmd"
+      },
+      "mapping": {
+        "title": [
+          "title",
+          "ttl",
+          "sj",
+          "bbsTitle"
+        ],
+        "date": [
+          "date",
+          "regDate",
+          "wrtDate",
+          "writeDate",
+          "frstRegDt"
+        ],
+        "body": [
+          "content",
+          "contents",
+          "cn",
+          "body",
+          "summary"
+        ],
+        "department": [
+          "dept",
+          "deptNm",
+          "department",
+          "chargeDept"
+        ],
+        "detail_url": [
+          "url",
+          "link",
+          "detailUrl",
+          "originUrl"
+        ],
+        "attachments": [
+          "fileUrl",
+          "atchFileUrl",
+          "downloadUrl",
+          "pdfUrl"
+        ]
+      }
+    },
+    {
+      "id": "gyeongnam_press",
+      "enabled": false,
+      "name": "경상남도_보도자료",
+      "org": "경상남도",
+      "region": "경상남도",
+      "kind": "data_go_kr_rest",
+      "portal_url": "https://www.data.go.kr/data/15062546/openapi.do",
+      "base_url": "https://apis.data.go.kr/6480000/gyeongnamnewsinfo/gyeongnampressrelease",
+      "license": "이용허락범위 제한 없음",
+      "date_query": {
+        "begin_param": "bgngYmd",
+        "end_param": "endYmd"
+      },
+      "mapping": {
+        "title": [
+          "title",
+          "subject",
+          "sj",
+          "bbsTitle"
+        ],
+        "date": [
+          "date",
+          "regDate",
+          "wrtDate",
+          "writeDate",
+          "pressDate"
+        ],
+        "body": [
+          "content",
+          "contents",
+          "cn",
+          "body"
+        ],
+        "department": [
+          "dept",
+          "deptNm",
+          "department"
+        ],
+        "detail_url": [
+          "url",
+          "link",
+          "detailUrl"
+        ],
+        "attachments": [
+          "fileUrl",
+          "atchFileUrl",
+          "downloadUrl",
+          "pdfUrl"
+        ]
+      }
+    },
+    {
+      "id": "gwangjin_press_rss",
+      "enabled": false,
+      "name": "서울특별시 광진구_보도자료",
+      "org": "서울특별시 광진구",
+      "region": "서울특별시",
+      "kind": "link_xml",
+      "portal_url": "https://www.data.go.kr/data/15063658/openapi.do?recommendDataYn=Y",
+      "base_url": "https://www.gwangjin.go.kr/portal/bbs/B0000002/rssService.do?viewType=CONTBODY&bbsId=B02",
+      "service_key_env": "",
+      "license": "이용허락범위 제한 없음",
+      "detail_body": {
+        "html_id": "dbData",
+        "stop_phrases": [
+          "목록 이전글",
+          "목록 다음글",
+          "Insert title here",
+          "만족도"
+        ]
+      },
+      "mapping": {
+        "title": [
+          "title",
+          "TITLE",
+          "sj"
+        ],
+        "date": [
+          "pubDate",
+          "REG_DATE",
+          "regDate",
+          "writeDate"
+        ],
+        "body": [
+          "description",
+          "CONTENT",
+          "content",
+          "cn"
+        ],
+        "department": [
+          "DEPT",
+          "deptNm"
+        ],
+        "detail_url": [
+          "link",
+          "LINK",
+          "url"
+        ],
+        "attachments": [
+          "enclosure",
+          "FILE_URL",
+          "fileUrl"
+        ]
+      }
+    },
+    {
+      "id": "seongbuk_press",
+      "enabled": false,
+      "name": "서울특별시 성북구_보도자료 조회 서비스",
+      "org": "서울특별시 성북구",
+      "region": "서울특별시",
+      "kind": "seoul_open_data",
+      "portal_url": "https://www.data.go.kr/data/15159650/openapi.do",
+      "base_url": "http://openapi.seoul.go.kr:8088",
+      "url_template": "http://openapi.seoul.go.kr:8088/{key}/json/{service}/{start}/{end}/",
+      "service_name": "sbPressBoard",
+      "service_key_env": "SEOUL_OPEN_DATA_KEY",
+      "sample_key": "sample",
+      "page_size": 5,
+      "items_path": [
+        "sbPressBoard",
+        "row"
+      ],
+      "license": "공공누리 제4유형: 출처표시, 상업적 이용금지, 변경금지",
+      "mapping": {
+        "title": [
+          "TITLE",
+          "title",
+          "sj"
+        ],
+        "date": [
+          "REGDATE",
+          "REG_DATE",
+          "regDate",
+          "writeDate"
+        ],
+        "body": [
+          "CONT",
+          "CONTENT",
+          "content",
+          "cn"
+        ],
+        "department": [
+          "DEPTNM",
+          "DEPT",
+          "deptNm"
+        ],
+        "detail_url": [
+          "LINK",
+          "link",
+          "url"
+        ],
+        "attachments": [
+          "FILE_URL",
+          "fileUrl"
+        ]
+      }
+    },
+    {
+      "id": "seogwipo_economic_press",
+      "enabled": false,
+      "name": "제주특별자치도 서귀포시_경제뉴스보도자료",
+      "org": "제주특별자치도 서귀포시",
+      "region": "제주특별자치도",
+      "kind": "link_xml",
+      "portal_url": "https://www.data.go.kr/data/15108427/openapi.do",
+      "base_url": "https://www.seogwipo.go.kr/openapi/sgpEconomicService/",
+      "service_key_env": "",
+      "license": "이용허락범위 제한 없음",
+      "mapping": {
+        "title": [
+          "title",
+          "TITLE",
+          "sj"
+        ],
+        "date": [
+          "pubDate",
+          "wtime",
+          "date",
+          "REG_DATE",
+          "regDate"
+        ],
+        "body": [
+          "description",
+          "contents",
+          "content",
+          "CONTENT",
+          "cn"
+        ],
+        "department": [
+          "dept",
+          "deptNm",
+          "DEPT"
+        ],
+        "detail_url": [
+          "link",
+          "url",
+          "LINK"
+        ],
+        "attachments": [
+          "fileUrl",
+          "downloadUrl",
+          "enclosure"
+        ]
+      }
+    },
+    {
+      "id": "daegu_donggu_press",
+      "enabled": false,
+      "name": "대구광역시 동구_대구 동구청 보도자료 목록",
+      "org": "대구광역시 동구",
+      "region": "대구광역시",
+      "kind": "data_go_kr_rest",
+      "portal_url": "https://www.data.go.kr/data/15110424/openapi.do",
+      "base_url": "https://apis.data.go.kr/3420000/dongguOfficePressReleaseService/getDongguOfficePressRelease",
+      "license": "이용허락범위 제한 없음",
+      "mapping": {
+        "title": [
+          "title",
+          "subject",
+          "sj"
+        ],
+        "date": [
+          "date",
+          "regDate",
+          "pressDate"
+        ],
+        "body": [
+          "content",
+          "contents",
+          "cn"
+        ],
+        "department": [
+          "dept",
+          "deptNm"
+        ],
+        "detail_url": [
+          "url",
+          "link",
+          "detailUrl"
+        ],
+        "attachments": [
+          "fileUrl",
+          "atchFileUrl",
+          "downloadUrl",
+          "pdfUrl"
+        ]
+      }
+    },
+    {
+      "id": "gwacheon_press",
+      "enabled": false,
+      "name": "경기도 과천시_보도자료",
+      "org": "경기도 과천시",
+      "region": "경기도",
+      "kind": "data_go_kr_rest",
+      "portal_url": "https://www.data.go.kr/data/15159541/openapi.do?recommendDataYn=Y",
+      "base_url": "https://apis.data.go.kr/3970000/newsList/list",
+      "license": "공공저작물 : 출처표시 (제 1유형)",
+      "mapping": {
+        "title": [
+          "title",
+          "subject",
+          "sj"
+        ],
+        "date": [
+          "date",
+          "regDate",
+          "pressDate",
+          "wrtDate"
+        ],
+        "body": [
+          "content",
+          "contents",
+          "cn",
+          "body"
+        ],
+        "department": [
+          "dept",
+          "deptNm",
+          "department"
+        ],
+        "detail_url": [
+          "url",
+          "link",
+          "detailUrl"
+        ],
+        "attachments": [
+          "fileUrl",
+          "atchFileUrl",
+          "downloadUrl",
+          "pdfUrl"
+        ]
+      }
+    },
+    {
+      "id": "gg_news_plaza",
+      "enabled": false,
+      "name": "경기도_뉴스포털_경기뉴스광장",
+      "org": "경기도",
+      "region": "경기도",
+      "kind": "link_xml",
+      "portal_url": "https://www.data.go.kr/data/15113315/openapi.do?recommendDataYn=Y",
+      "api_guide_url": "https://gnews.gg.go.kr/rss/gnews_guide.do",
+      "base_url": "https://gnews.gg.go.kr/rss/gnews_rss.do",
+      "url_template": "https://gnews.gg.go.kr/rss/gnews_rss.do?servicekey={key}&bs_code={bs_code}&page={page}&pagesize={page_size}&search_flag=1&keyword={keyword}",
+      "detail_url_template": "https://gnews.gg.go.kr/rss/gnews_bodo_rss.do?servicekey={key}&ca_code={detail_key}&bs_code={bs_code}",
+      "detail_key_fields": [
+        "number"
+      ],
+      "items_path": [
+        "rss",
+        "channel",
+        "item"
+      ],
+      "detail_items_path": [
+        "rss",
+        "channel",
+        "item"
+      ],
+      "service_key_env": "GNEWS_SERVICE_KEY",
+      "response_format": "xml",
+      "bs_code": "S017",
+      "page_size": 10,
+      "license": "이용허락범위 제한 없음, 상세 원문은 항목별 공공누리 확인 필요",
+      "mapping": {
+        "title": [
+          "title",
+          "TITLE",
+          "sj"
+        ],
+        "date": [
+          "date",
+          "dc:date",
+          "PUBL_DATE",
+          "regDate",
+          "pubDate"
+        ],
+        "body": [
+          "description",
+          "content",
+          "contents",
+          "cn"
+        ],
+        "department": [
+          "author",
+          "ORG_NM",
+          "deptNm"
+        ],
+        "detail_url": [
+          "link",
+          "LINK_URL",
+          "url"
+        ],
+        "attachments": [
+          "clipname1",
+          "clipname2",
+          "clipname3",
+          "clipname4",
+          "clipname5",
+          "clipname6",
+          "clipname7",
+          "clipname8",
+          "clipname9",
+          "clipname10",
+          "fileUrl",
+          "downloadUrl",
+          "enclosure"
+        ]
+      }
+    },
+    {
+      "id": "gg_press_link",
+      "enabled": false,
+      "name": "경기도_보도자료 현황",
+      "org": "경기도",
+      "region": "경기도",
+      "kind": "link_xml",
+      "portal_url": "https://www.data.go.kr/data/15034926/openapi.do?recommendDataYn=Y",
+      "base_url": "https://data.gg.go.kr/portal/data/service/selectServicePage.do?infId=APXKY127QXG0TVVR1Y6E28683342&infSeq=2",
+      "service_key_env": "",
+      "requires_review": true,
+      "license": "목록 제한 없음, 상세 원문은 공공누리 유형별 확인 필요",
+      "mapping": {
+        "title": [
+          "TITLE",
+          "title",
+          "sj"
+        ],
+        "date": [
+          "PUBL_DATE",
+          "date",
+          "regDate"
+        ],
+        "body": [
+          "content",
+          "contents",
+          "cn"
+        ],
+        "department": [
+          "ORG_NM",
+          "deptNm"
+        ],
+        "detail_url": [
+          "LINK_URL",
+          "url",
+          "link"
+        ],
+        "attachments": [
+          "fileUrl",
+          "downloadUrl"
+        ]
+      }
+    },
+    {
+      "id": "nabis_local_policy_press",
+      "enabled": false,
+      "name": "한국산업기술기획평가원_지역균형발전 지자체 정책보도",
+      "org": "한국산업기술기획평가원",
+      "region": "전국",
+      "kind": "link_xml",
+      "portal_url": "https://www.data.go.kr/data/15106142/openapi.do?recommendDataYn=Y",
+      "base_url": "https://www.nabis.go.kr/nabisApiList.do?menucd=214&menuFlag=Y&status=2&apiName=4",
+      "service_key_env": "",
+      "requires_review": true,
+      "license": "이용허락범위 제한 없음",
+      "mapping": {
+        "title": [
+          "title",
+          "subject",
+          "sj"
+        ],
+        "date": [
+          "date",
+          "regDate",
+          "pressDate"
+        ],
+        "body": [
+          "content",
+          "contents",
+          "cn"
+        ],
+        "department": [
+          "dept",
+          "orgNm"
+        ],
+        "detail_url": [
+          "url",
+          "link",
+          "detailUrl"
+        ],
+        "attachments": [
+          "fileUrl",
+          "downloadUrl"
+        ]
+      }
+    }
+  ]
+}
