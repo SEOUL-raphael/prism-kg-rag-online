@@ -11,6 +11,13 @@ from pathlib import Path
 LOAD_ORDER = ("projects", "reports", "files", "kg_nodes", "kg_edges", "chunks")
 
 
+class RequestFailure(RuntimeError):
+    def __init__(self, code, body):
+        super().__init__("HTTP {0}: {1}".format(code, body))
+        self.code = code
+        self.body = body
+
+
 def require_env(name):
     value = os.environ.get(name, "").strip()
     if not value:
@@ -18,8 +25,13 @@ def require_env(name):
     return value
 
 
-def admin_key():
-    return os.environ.get("SUPABASE_SECRET_KEY", "").strip() or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+def admin_keys():
+    keys = []
+    for name in ("SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY"):
+        value = os.environ.get(name, "").strip()
+        if value:
+            keys.append((name, value))
+    return keys
 
 
 def read_jsonl(path):
@@ -64,7 +76,7 @@ def request_json(url, key, rows, retries=4):
             if exc.code in (429, 500, 502, 503, 504) and attempt + 1 < retries:
                 time.sleep(2 ** attempt)
                 continue
-            raise RuntimeError("HTTP {0}: {1}".format(exc.code, body)) from exc
+            raise RequestFailure(exc.code, body) from exc
         except urllib.error.URLError:
             if attempt + 1 < retries:
                 time.sleep(2 ** attempt)
@@ -83,8 +95,12 @@ def count_remote(supabase_url, key, table):
             "Prefer": "count=exact",
         },
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        value = resp.headers.get("content-range", "")
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            value = resp.headers.get("content-range", "")
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")[:1000]
+        raise RequestFailure(exc.code, body) from exc
     if "/" in value:
         return int(value.rsplit("/", 1)[1])
     return None
@@ -98,9 +114,22 @@ def main():
     args = parser.parse_args()
 
     supabase_url = require_env("SUPABASE_URL")
-    key = admin_key()
-    if not key:
+    keys = admin_keys()
+    if not keys:
         raise RuntimeError("SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is not configured")
+    key_index = 0
+
+    def with_admin_key(func):
+        nonlocal key_index
+        while True:
+            try:
+                return func(keys[key_index][1])
+            except RequestFailure as exc:
+                if exc.code in (401, 403) and key_index + 1 < len(keys):
+                    key_index += 1
+                    print("primary admin key rejected; retrying with fallback key", flush=True)
+                    continue
+                raise
 
     base = Path(args.dir)
     counts = {}
@@ -112,13 +141,13 @@ def main():
         total = 0
         endpoint = urllib.parse.urljoin(rest_base, table)
         for batch in batches(read_jsonl(path), max(1, args.batch_size)):
-            request_json(endpoint, key, batch)
+            with_admin_key(lambda key: request_json(endpoint, key, batch))
             total += len(batch)
             print("{0} upserted {1}".format(table, total), flush=True)
         counts[table] = total
 
     if args.verify:
-        remote = {table: count_remote(supabase_url, key, table) for table in counts}
+        remote = {table: with_admin_key(lambda key, table=table: count_remote(supabase_url, key, table)) for table in counts}
     else:
         remote = {}
     print(json.dumps({"loaded": counts, "remote": remote}, ensure_ascii=False, indent=2))
