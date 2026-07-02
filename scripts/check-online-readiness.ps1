@@ -82,7 +82,13 @@ if ($SupabaseUrl -and $adminKeys.Count -gt 0) {
         "Authorization" = "Bearer $($entry.value)"
         "Prefer" = "count=exact"
       }
-      $response = Invoke-WebRequest -Method Get -Uri "$($SupabaseUrl.TrimEnd('/'))/rest/v1/projects?select=research_id&limit=1" -Headers $headers -TimeoutSec 30
+      $response = Invoke-WebRequest `
+        -Method Get `
+        -Uri "$($SupabaseUrl.TrimEnd('/'))/rest/v1/projects?select=research_id&limit=1" `
+        -Headers $headers `
+        -UserAgent "codex-prism-readiness/1.0" `
+        -UseBasicParsing `
+        -TimeoutSec 30
       Add-Check $checks "supabase_schema" ($response.StatusCode -lt 400) "projects table is reachable with $($entry.name)"
       $schemaChecked = $true
       break
