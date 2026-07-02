@@ -100,6 +100,36 @@ alter table public.kg_edges enable row level security;
 alter table public.chunks enable row level security;
 alter table public.rag_query_logs enable row level security;
 
+grant usage on schema public to anon, authenticated, service_role;
+grant select on table
+  public.projects,
+  public.reports,
+  public.files,
+  public.kg_nodes,
+  public.kg_edges,
+  public.chunks
+to authenticated;
+grant insert, select on table public.rag_query_logs to authenticated;
+grant all privileges on table
+  public.projects,
+  public.reports,
+  public.files,
+  public.kg_nodes,
+  public.kg_edges,
+  public.chunks,
+  public.rag_query_logs
+to service_role;
+grant usage, select on sequence public.rag_query_logs_id_seq to authenticated, service_role;
+
+drop policy if exists "authenticated can read projects" on public.projects;
+drop policy if exists "authenticated can read reports" on public.reports;
+drop policy if exists "authenticated can read files" on public.files;
+drop policy if exists "authenticated can read kg_nodes" on public.kg_nodes;
+drop policy if exists "authenticated can read kg_edges" on public.kg_edges;
+drop policy if exists "authenticated can read chunks" on public.chunks;
+drop policy if exists "authenticated can insert own rag logs" on public.rag_query_logs;
+drop policy if exists "authenticated can read own rag logs" on public.rag_query_logs;
+
 create policy "authenticated can read projects" on public.projects for select to authenticated using (true);
 create policy "authenticated can read reports" on public.reports for select to authenticated using (true);
 create policy "authenticated can read files" on public.files for select to authenticated using (true);
@@ -301,3 +331,9 @@ as $$
     'conversion_rate', round(((select count(*) from public.files where status = 'converted')::numeric / greatest((select count(*) from public.files), 1)) * 100, 2)
   );
 $$;
+
+grant execute on function public.search_chunks(text, integer, text[]) to authenticated, service_role;
+grant execute on function public.kg_search(text[], text[], integer) to authenticated, service_role;
+grant execute on function public.kg_summary(integer) to authenticated, service_role;
+grant execute on function public.project_summary(integer) to authenticated, service_role;
+grant execute on function public.operations_status() to authenticated, service_role;
