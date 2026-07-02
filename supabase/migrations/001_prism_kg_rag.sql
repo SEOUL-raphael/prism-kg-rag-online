@@ -88,6 +88,7 @@ create index if not exists files_status_idx on public.files (status);
 create index if not exists files_research_id_idx on public.files (research_id);
 create index if not exists chunks_research_id_idx on public.chunks (research_id);
 create index if not exists chunks_file_id_idx on public.chunks (file_id);
+create index if not exists chunks_title_trgm on public.chunks using gin (title gin_trgm_ops);
 create index if not exists kg_nodes_kind_label_idx on public.kg_nodes (kind, label);
 create index if not exists kg_nodes_label_trgm on public.kg_nodes using gin (label gin_trgm_ops);
 create index if not exists kg_edges_from_idx on public.kg_edges (from_id);
@@ -158,31 +159,71 @@ returns table (
   score real,
   metadata jsonb
 )
-language sql
+language plpgsql
 stable
 as $$
-  select
-    c.id,
-    c.document_id,
-    c.chunk_index,
-    c.research_id,
-    c.title,
-    c.organ_name,
-    c.file_id,
-    c.file_name,
-    c.text,
-    greatest(similarity(c.text, query_text), similarity(coalesce(c.title, ''), query_text))::real as score,
-    c.metadata
-  from public.chunks c
-  where
-    (research_ids is null or c.research_id = any(research_ids))
-    and (
-      c.text ilike '%' || query_text || '%'
-      or c.title ilike '%' || query_text || '%'
-      or similarity(c.text, query_text) > 0.08
-    )
-  order by score desc, c.id
-  limit least(greatest(match_limit, 1), 50);
+declare
+  q text := trim(coalesce(query_text, ''));
+  term text;
+  lim integer := least(greatest(match_limit, 1), 50);
+  term_pattern text;
+  phrase_pattern text;
+begin
+  select split.term
+  into term
+  from regexp_split_to_table(q, '\s+') with ordinality as split(term, ord)
+  where char_length(split.term) >= 2
+  order by split.ord
+  limit 1;
+
+  term := coalesce(term, q);
+  if term is null or char_length(term) < 2 then
+    return;
+  end if;
+
+  term_pattern := '%' || term || '%';
+  phrase_pattern := '%' || q || '%';
+
+  if research_ids is null then
+    return query execute format($sql$
+      select
+        c.id,
+        c.document_id,
+        c.chunk_index,
+        c.research_id,
+        c.title,
+        c.organ_name,
+        c.file_id,
+        c.file_name,
+        c.text,
+        case when c.text ilike %L then 2.0::real else 1.0::real end as score,
+        c.metadata
+      from public.chunks c
+      where c.text ilike %L
+      limit %s
+    $sql$, phrase_pattern, term_pattern, lim);
+  else
+    return query execute format($sql$
+      select
+        c.id,
+        c.document_id,
+        c.chunk_index,
+        c.research_id,
+        c.title,
+        c.organ_name,
+        c.file_id,
+        c.file_name,
+        c.text,
+        case when c.text ilike %L then 2.0::real else 1.0::real end as score,
+        c.metadata
+      from public.chunks c
+      where c.research_id = any($1)
+        and c.text ilike %L
+      limit %s
+    $sql$, phrase_pattern, term_pattern, lim)
+    using research_ids;
+  end if;
+end;
 $$;
 
 create or replace function public.kg_search(
