@@ -84,8 +84,10 @@ create table if not exists public.rag_query_logs (
 
 create index if not exists projects_research_name_trgm on public.projects using gin (research_name gin_trgm_ops);
 create index if not exists projects_organ_name_idx on public.projects (organ_name);
+create index if not exists files_status_idx on public.files (status);
 create index if not exists files_research_id_idx on public.files (research_id);
 create index if not exists chunks_research_id_idx on public.chunks (research_id);
+create index if not exists chunks_file_id_idx on public.chunks (file_id);
 create index if not exists kg_nodes_kind_label_idx on public.kg_nodes (kind, label);
 create index if not exists kg_nodes_label_trgm on public.kg_nodes using gin (label gin_trgm_ops);
 create index if not exists kg_edges_from_idx on public.kg_edges (from_id);
