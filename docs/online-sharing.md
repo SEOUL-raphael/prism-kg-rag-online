@@ -66,6 +66,15 @@ supabase/sql/after-bulk-load.sql
 - 통계 갱신
 - PostgREST schema reload 알림
 
+SQL Editor에서 `chunks_text_trgm` 생성이 timeout되면 `psql`로 직접 연결해 실행한다. pooler 주소는 Supabase Dashboard의 **Connect** 화면에서 확인하고, 비밀번호에 특수문자가 있으면 URL에 직접 넣지 말고 `PGPASSWORD` 환경변수로 넘긴다.
+
+```powershell
+$env:PGPASSWORD="<database-password>"
+$db="postgresql://postgres.<project-ref>@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require&connect_timeout=10"
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" $db -v ON_ERROR_STOP=1 -f supabase\sql\after-bulk-load.sql
+Remove-Item Env:PGPASSWORD
+```
+
 ## Edge Function
 
 `supabase/functions/rag-query/index.ts`는 로그인 사용자의 JWT를 받아 RLS가 적용된 상태로 `kg_search`, `search_chunks`를 호출한다. MiniMax API 키는 Edge Function secret으로만 읽고 브라우저, 로그, 응답, 번들에는 노출하지 않는다.
