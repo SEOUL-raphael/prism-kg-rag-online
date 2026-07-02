@@ -6,6 +6,7 @@ param(
   [int]$MinFreeGb = 8,
   [int]$PollSeconds = 60,
   [string]$ArchiveRoot = "C:\gov-rag-portable-archive\$(Get-Date -Format yyyyMMdd)",
+  [switch]$NoPymupdfFallback,
   [switch]$SkipFinalBuildKg
 )
 
@@ -79,6 +80,14 @@ function Invoke-PrismStep {
   }
 }
 
+function Get-ConvertArgs {
+  $args = @("-m", "govrag.prism_cli", "convert", "--db", $Db, "--data-dir", $DataDir, "--limit", "$LimitPerBatch")
+  if (-not $NoPymupdfFallback) {
+    $args += "--allow-pymupdf-fallback"
+  }
+  return $args
+}
+
 function Save-Status {
   param([string]$State, [int]$BatchesRun, [object]$Counts, [string]$Message = "")
   [pscustomobject]@{
@@ -99,7 +108,7 @@ $env:PYTHONPATH = "src"
 $batchesRun = 0
 
 try {
-  Write-WatchLog "watch started root=$ResolvedRoot db=$Db dataDir=$DataDir limitPerBatch=$LimitPerBatch maxBatches=$MaxBatches minFreeGb=$MinFreeGb"
+  Write-WatchLog "watch started root=$ResolvedRoot db=$Db dataDir=$DataDir limitPerBatch=$LimitPerBatch maxBatches=$MaxBatches minFreeGb=$MinFreeGb pymupdfFallback=$(-not $NoPymupdfFallback)"
 
   while ($true) {
     $workers = Get-PrismWorker
@@ -128,7 +137,7 @@ try {
     }
 
     $batchesRun += 1
-    Invoke-PrismStep "convert" @("-m", "govrag.prism_cli", "convert", "--db", $Db, "--data-dir", $DataDir, "--limit", "$LimitPerBatch")
+    Invoke-PrismStep "convert" (Get-ConvertArgs)
   }
 
   $finalCounts = Get-Counts
