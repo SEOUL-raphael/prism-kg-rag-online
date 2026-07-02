@@ -1,4 +1,7 @@
 import argparse
+import base64
+import hashlib
+import hmac
 import json
 import os
 import time
@@ -31,7 +34,47 @@ def admin_keys():
         value = os.environ.get(name, "").strip()
         if value:
             keys.append((name, value))
+    jwt_secret = os.environ.get("SUPABASE_JWT_SECRET", "").strip()
+    if jwt_secret:
+        keys.append(("SUPABASE_JWT_SECRET/service_role", mint_legacy_jwt(jwt_secret, "service_role")))
     return keys
+
+
+def api_key_for_request(admin_key):
+    return (
+        os.environ.get("SUPABASE_PUBLISHABLE_KEY", "").strip()
+        or os.environ.get("VITE_SUPABASE_PUBLISHABLE_KEY", "").strip()
+        or os.environ.get("SUPABASE_ANON_KEY", "").strip()
+        or admin_key
+    )
+
+
+def b64url(data):
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def mint_legacy_jwt(secret, role, ttl_seconds=3600):
+    now = int(time.time())
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = {
+        "iss": "supabase",
+        "role": role,
+        "iat": now,
+        "exp": now + int(ttl_seconds),
+    }
+    ref = os.environ.get("SUPABASE_PROJECT_REF", "").strip()
+    if not ref:
+        url = os.environ.get("SUPABASE_URL", "").strip()
+        if "://" in url:
+            ref = url.split("://", 1)[1].split(".", 1)[0]
+    if ref:
+        payload["ref"] = ref
+    signing_input = "{0}.{1}".format(
+        b64url(json.dumps(header, separators=(",", ":"), sort_keys=True).encode("utf-8")),
+        b64url(json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")),
+    ).encode("ascii")
+    signature = hmac.new(secret.encode("utf-8"), signing_input, hashlib.sha256).digest()
+    return signing_input.decode("ascii") + "." + b64url(signature)
 
 
 def read_jsonl(path):
@@ -60,7 +103,7 @@ def request_json(url, key, rows, retries=4):
         data=data,
         method="POST",
         headers={
-            "apikey": key,
+            "apikey": api_key_for_request(key),
             "Authorization": "Bearer {0}".format(key),
             "Content-Type": "application/json",
             "Prefer": "resolution=merge-duplicates,return=minimal",
@@ -90,7 +133,7 @@ def count_remote(supabase_url, key, table):
         endpoint,
         method="HEAD",
         headers={
-            "apikey": key,
+            "apikey": api_key_for_request(key),
             "Authorization": "Bearer {0}".format(key),
             "Prefer": "count=exact",
         },
@@ -116,7 +159,7 @@ def main():
     supabase_url = require_env("SUPABASE_URL")
     keys = admin_keys()
     if not keys:
-        raise RuntimeError("SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is not configured")
+        raise RuntimeError("SUPABASE_SECRET_KEY, SUPABASE_SERVICE_ROLE_KEY, or SUPABASE_JWT_SECRET is not configured")
     key_index = 0
 
     def with_admin_key(func):
