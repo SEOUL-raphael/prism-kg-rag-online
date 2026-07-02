@@ -348,6 +348,18 @@ def cmd_download(args):
     print("prism download done={0} skipped={1} failed={2}".format(done, skipped, failed))
 
 
+def clean_surrogates(value):
+    if isinstance(value, str):
+        return value.encode("utf-8", errors="replace").decode("utf-8")
+    if isinstance(value, list):
+        return [clean_surrogates(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(clean_surrogates(item) for item in value)
+    if isinstance(value, dict):
+        return {clean_surrogates(key): clean_surrogates(item) for key, item in value.items()}
+    return value
+
+
 def cmd_convert(args):
     init_db(args.db)
     conn = connect(args.db)
@@ -365,6 +377,8 @@ def cmd_convert(args):
             out_dir = os.path.join(args.data_dir, "converted", "prism", row["id"])
             try:
                 text, metadata = convert_document(path, out_dir, allow_pymupdf_fallback=args.allow_pymupdf_fallback)
+                text = clean_surrogates(text)
+                metadata = clean_surrogates(metadata)
                 doc_id = "prism-doc-" + row["id"]
                 title = row["research_name"] or row["file_name"] or os.path.basename(path)
                 ext = os.path.splitext(path)[1].lower().lstrip(".")
