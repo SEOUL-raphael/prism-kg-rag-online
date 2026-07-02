@@ -12,6 +12,53 @@ from pathlib import Path
 
 
 LOAD_ORDER = ("projects", "reports", "files", "kg_nodes", "kg_edges", "chunks")
+TABLE_COLUMNS = {
+    "projects": {
+        "research_id",
+        "research_name",
+        "organ_name",
+        "researcher_name",
+        "charge_person_department",
+        "charge_person_phone_no",
+        "biz_name",
+        "research_start_date",
+        "research_end_date",
+        "brm_biz_name",
+        "research_outline",
+        "issued_year",
+        "updated_at",
+    },
+    "reports": {"id", "research_id", "title", "table_contents", "summary", "keyword", "issued_year", "updated_at"},
+    "files": {
+        "id",
+        "research_id",
+        "source_section",
+        "file_type",
+        "file_name",
+        "file_size",
+        "media_type",
+        "sha256",
+        "size",
+        "status",
+        "markdown_chars",
+        "updated_at",
+    },
+    "kg_nodes": {"id", "kind", "label", "data", "updated_at"},
+    "kg_edges": {"id", "from_id", "to_id", "kind", "data", "updated_at"},
+    "chunks": {
+        "id",
+        "document_id",
+        "chunk_index",
+        "research_id",
+        "file_id",
+        "title",
+        "organ_name",
+        "file_name",
+        "text",
+        "metadata",
+        "updated_at",
+    },
+}
 
 
 class RequestFailure(RuntimeError):
@@ -85,6 +132,15 @@ def read_jsonl(path):
                 yield json.loads(line)
 
 
+def skip_items(items, count):
+    remaining = max(0, int(count or 0))
+    for item in items:
+        if remaining > 0:
+            remaining -= 1
+            continue
+        yield item
+
+
 def batches(items, batch_size):
     batch = []
     for item in items:
@@ -96,8 +152,18 @@ def batches(items, batch_size):
         yield batch
 
 
-def request_json(url, key, rows, retries=4):
+def normalize_row(table, row):
+    allowed = TABLE_COLUMNS.get(table)
+    if not allowed:
+        return row
+    return {key: value for key, value in row.items() if key in allowed}
+
+
+def request_json(url, key, rows, retries=4, upsert=True):
     data = json.dumps(rows, ensure_ascii=False).encode("utf-8")
+    prefer = "return=minimal"
+    if upsert:
+        prefer = "resolution=merge-duplicates," + prefer
     req = urllib.request.Request(
         url,
         data=data,
@@ -106,7 +172,7 @@ def request_json(url, key, rows, retries=4):
             "apikey": api_key_for_request(key),
             "Authorization": "Bearer {0}".format(key),
             "Content-Type": "application/json",
-            "Prefer": "resolution=merge-duplicates,return=minimal",
+            "Prefer": prefer,
         },
     )
     for attempt in range(retries):
@@ -153,6 +219,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", default=os.path.join("exports", "supabase"))
     parser.add_argument("--batch-size", type=int, default=1000)
+    parser.add_argument("--tables", nargs="*", choices=LOAD_ORDER, default=list(LOAD_ORDER))
+    parser.add_argument("--skip-rows", type=int, default=0)
+    parser.add_argument("--insert-only", action="store_true")
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
 
@@ -177,14 +246,17 @@ def main():
     base = Path(args.dir)
     counts = {}
     rest_base = urllib.parse.urljoin(supabase_url.rstrip("/") + "/", "rest/v1/")
-    for table in LOAD_ORDER:
+    for table in args.tables:
         path = base / "{0}.jsonl".format(table)
         if not path.exists():
             continue
         total = 0
         endpoint = urllib.parse.urljoin(rest_base, table)
-        for batch in batches(read_jsonl(path), max(1, args.batch_size)):
-            with_admin_key(lambda key: request_json(endpoint, key, batch))
+        rows = (normalize_row(table, row) for row in read_jsonl(path))
+        if len(args.tables) == 1 and args.skip_rows:
+            rows = skip_items(rows, args.skip_rows)
+        for batch in batches(rows, max(1, args.batch_size)):
+            with_admin_key(lambda key: request_json(endpoint, key, batch, upsert=not args.insert_only))
             total += len(batch)
             print("{0} upserted {1}".format(table, total), flush=True)
         counts[table] = total
