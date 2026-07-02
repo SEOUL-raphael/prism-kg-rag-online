@@ -3,6 +3,7 @@ param(
   [string]$DataDir = "data",
   [int]$Limit = 200,
   [string]$ArchiveRoot = "C:\gov-rag-portable-archive\$(Get-Date -Format yyyyMMdd)",
+  [switch]$NoPymupdfFallback,
   [switch]$SkipBuildKg
 )
 
@@ -28,12 +29,17 @@ if ($SkipBuildKg) {
   $buildBlock = "`$buildExit = `$null"
 }
 
+$fallbackArg = ""
+if (-not $NoPymupdfFallback) {
+  $fallbackArg = " --allow-pymupdf-fallback"
+}
+
 $script = @"
 `$ErrorActionPreference = 'Continue'
 Set-Location '$ResolvedRoot'
 `$env:PYTHONPATH = 'src'
 `$started = Get-Date -Format o
-python -m govrag.prism_cli convert --db "$Db" --data-dir "$DataDir" --limit $Limit
+python -m govrag.prism_cli convert --db "$Db" --data-dir "$DataDir" --limit $Limit$fallbackArg
 `$convertExit = `$LASTEXITCODE
 $buildBlock
 [pscustomobject]@{
