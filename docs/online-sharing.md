@@ -90,6 +90,14 @@ npx supabase secrets set --project-ref <project-ref> SUPABASE_PUBLISHABLE_KEY=..
 npx supabase functions deploy rag-query --project-ref <project-ref> --use-api
 ```
 
+DB migration과 snapshot 적재는 이미 끝났고 Edge Function만 배포할 때는 아래처럼 실행한다.
+
+```powershell
+$env:SUPABASE_ACCESS_TOKEN="<supabase-management-access-token>"
+$env:SUPABASE_PUBLISHABLE_KEY="<publishable-key>"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\deploy-supabase-online.ps1 -SkipDbPush -SkipLoad
+```
+
 ## GitHub Pages
 
 `.github/workflows/frontend-pages.yml`은 `frontend`를 빌드해 GitHub Pages로 배포한다.
