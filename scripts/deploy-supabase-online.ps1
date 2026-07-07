@@ -50,17 +50,17 @@ if (-not (Test-SupabaseManagementAuth)) {
   }
 }
 
-$linkArgs = @("supabase", "link", "--project-ref", $ProjectRef, "--yes")
-if ($env:SUPABASE_DB_PASSWORD) {
-  $linkArgs += @("--password", $env:SUPABASE_DB_PASSWORD)
-}
-Write-Step "linking Supabase project $ProjectRef"
-& npx @linkArgs | Out-Null
-if ($LASTEXITCODE -ne 0) {
-  throw "supabase link failed. If this prompts for a DB password, set SUPABASE_DB_PASSWORD."
-}
-
 if (-not $SkipDbPush) {
+  $linkArgs = @("supabase", "link", "--project-ref", $ProjectRef, "--yes")
+  if ($env:SUPABASE_DB_PASSWORD) {
+    $linkArgs += @("--password", $env:SUPABASE_DB_PASSWORD)
+  }
+  Write-Step "linking Supabase project $ProjectRef"
+  & npx @linkArgs | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    throw "supabase link failed. If this prompts for a DB password, set SUPABASE_DB_PASSWORD."
+  }
+
   $pushArgs = @("supabase", "db", "push", "--linked", "--yes")
   if ($env:SUPABASE_DB_PASSWORD) {
     $pushArgs += @("--password", $env:SUPABASE_DB_PASSWORD)
