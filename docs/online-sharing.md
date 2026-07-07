@@ -94,6 +94,12 @@ npx supabase functions deploy rag-query --project-ref <project-ref> --use-api
 
 `.github/workflows/frontend-pages.yml`은 `frontend`를 빌드해 GitHub Pages로 배포한다.
 
+현재 배포 URL:
+
+```text
+https://seoul-raphael.github.io/prism-kg-rag-online/
+```
+
 필요한 GitHub Actions 설정:
 
 - Secret `VITE_SUPABASE_URL`
@@ -102,15 +108,19 @@ npx supabase functions deploy rag-query --project-ref <project-ref> --use-api
 
 브라우저에는 publishable key만 들어간다. `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `MINIMAX_API_KEY`는 GitHub Pages나 프론트엔드 번들에 넣지 않는다.
 
-## 현재 제한
+## 현재 상태와 제한
 
-Private repository에서 GitHub Pages를 사용하려면 계정 또는 조직의 GitHub plan이 private Pages 배포를 지원해야 한다. 현재 점검 결과 이 private repository는 Pages가 플랜 제한으로 막혀 있다.
+GitHub Pages 배포는 활성화되어 있다. 레포지토리는 Pages 제한을 피하기 위해 public으로 전환했으며, 원본 데이터(`data/`, `exports/`, `logs/`)와 로컬 환경 파일(`.env`, `configs/runtime.local.env`)은 `.gitignore`로 제외한다.
 
-선택지는 다음 중 하나다.
+public 레포지토리에 올리면 안 되는 값:
 
-- 저장소를 public으로 전환하고 GitHub Pages 사용
-- GitHub 유료 플랜으로 private Pages 사용
-- GitHub는 코드 저장소로 유지하고 Render, Vercel, Netlify 같은 별도 정적 호스팅 사용
+- `SUPABASE_SECRET_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `MINIMAX_API_KEY`
+- PRISM 공공데이터 API key
+- Database password
+
+현재 남은 제한은 Supabase Edge Function 배포다. `rag-query` 배포와 Edge Function secret 설정에는 Supabase Management Access Token이 필요하다. 이 토큰이 없으면 GitHub Pages UI와 Supabase 데이터 조회/RPC는 가능하지만, 온라인 MiniMax RAG 답변 프록시는 아직 활성화되지 않는다.
 
 ## 점검
 
@@ -123,5 +133,5 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-online-readine
 - GitHub 인증과 repo 접근 OK
 - GitHub frontend secret OK
 - Supabase schema OK
+- GitHub Pages OK
 - Edge Function 배포 전이면 `supabase_management_auth`는 access token 없음으로 표시될 수 있음
-- private repo Pages 제한이 있으면 `github_pages`는 false로 표시됨
