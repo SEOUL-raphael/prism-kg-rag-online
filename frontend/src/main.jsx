@@ -275,7 +275,7 @@ function AuthGate() {
       <section className="auth-panel">
         <LockKeyhole size={28} />
         <h1>PRISM KG-RAG</h1>
-        <p>초대받은 이메일로 로그인 링크를 받아 접속합니다.</p>
+        <p>이메일로 로그인 링크를 받아 접속합니다.</p>
         <form onSubmit={signIn} className="auth-form">
           <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@example.go.kr" required />
           <button className="icon-button labeled primary" disabled={!email}>
