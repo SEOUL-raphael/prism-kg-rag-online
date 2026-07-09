@@ -13,6 +13,18 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
 
+function Use-UserEnvFallback {
+  param([string[]]$Names)
+  foreach ($name in $Names) {
+    if (-not [Environment]::GetEnvironmentVariable($name, "Process")) {
+      $value = [Environment]::GetEnvironmentVariable($name, "User")
+      if ($value) {
+        [Environment]::SetEnvironmentVariable($name, $value, "Process")
+      }
+    }
+  }
+}
+
 function Write-Step {
   param([string]$Message)
   Write-Host ("[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss K"), $Message)
@@ -35,6 +47,18 @@ function Test-SupabaseManagementAuth {
     $ErrorActionPreference = $oldPreference
   }
 }
+
+Use-UserEnvFallback @(
+  "SUPABASE_ACCESS_TOKEN",
+  "SUPABASE_URL",
+  "SUPABASE_PUBLISHABLE_KEY",
+  "VITE_SUPABASE_PUBLISHABLE_KEY",
+  "MINIMAX_API_KEY",
+  "MINIMAX_MODEL",
+  "SUPABASE_SECRET_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "SUPABASE_DB_PASSWORD"
+)
 
 Write-Step "checking Supabase CLI"
 & npx supabase --version | Out-Null
