@@ -128,7 +128,7 @@ public 레포지토리에 올리면 안 되는 값:
 - PRISM 공공데이터 API key
 - Database password
 
-현재 남은 제한은 Supabase Edge Function 배포다. `rag-query` 배포와 Edge Function secret 설정에는 Supabase Management Access Token이 필요하다. 이 토큰이 없으면 GitHub Pages UI와 Supabase 데이터 조회/RPC는 가능하지만, 온라인 MiniMax RAG 답변 프록시는 아직 활성화되지 않는다.
+Supabase Edge Function `rag-query`는 배포되어 있으며, 인증 사용자 기준으로 KG/RPC 근거 검색과 MiniMax 답변 smoke test가 통과했다. 재배포에는 Supabase Management Access Token이 필요하다.
 
 ## 점검
 
