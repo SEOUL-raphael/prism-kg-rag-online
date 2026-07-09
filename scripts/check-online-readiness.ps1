@@ -6,6 +6,27 @@ param(
 
 $ErrorActionPreference = "Continue"
 
+function Use-UserEnvFallback {
+  param([string[]]$Names)
+  foreach ($name in $Names) {
+    if (-not [Environment]::GetEnvironmentVariable($name, "Process")) {
+      $value = [Environment]::GetEnvironmentVariable($name, "User")
+      if ($value) {
+        [Environment]::SetEnvironmentVariable($name, $value, "Process")
+      }
+    }
+  }
+}
+
+Use-UserEnvFallback @(
+  "SUPABASE_ACCESS_TOKEN",
+  "SUPABASE_URL",
+  "SUPABASE_SECRET_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "SUPABASE_PUBLISHABLE_KEY",
+  "VITE_SUPABASE_PUBLISHABLE_KEY"
+)
+
 function Add-Check {
   param(
     [System.Collections.ArrayList]$Checks,
